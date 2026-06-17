@@ -25,7 +25,7 @@ const Login = () => {
       const { data } = await API.post('/auth/login', formData);
       if (data.success) {
         login(data.data, data.data.token);
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid credentials');

@@ -1,7 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
+import useAuth from '../../hooks/useAuth';
 import './Home.css';
 
 const Home = () => {
+  const { user, loading } = useAuth();
+
+  if (!loading && user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
     <section id="home-page" className="home">
       <div className="container home__hero">
