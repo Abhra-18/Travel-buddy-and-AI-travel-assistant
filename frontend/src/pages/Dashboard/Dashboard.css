@@ -1,0 +1,100 @@
+/* ── Dashboard Page ────────────────────────────────────────────── */
+.dashboard-page {
+  padding: 5rem 0 6rem;
+}
+
+/* ── Welcome Banner ──────────────────────────────────────────── */
+.dashboard-banner {
+  background: linear-gradient(135deg, var(--color-primary), #ec4899);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  color: #fff;
+  margin-bottom: 3rem;
+  box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-banner::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0; left: 0;
+  background: url('https://images.unsplash.com/photo-1436491865332-7a61a109cc05?auto=format&fit=crop&w=1200&q=80') center/cover;
+  opacity: 0.15;
+  mix-blend-mode: overlay;
+}
+
+.dashboard-banner-content {
+  position: relative;
+  z-index: 1;
+}
+
+.dashboard-banner h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-bottom: 0.5rem;
+}
+
+.dashboard-banner p {
+  font-size: 1.15rem;
+  opacity: 0.9;
+  max-width: 600px;
+}
+
+/* ── Dashboard Grid ──────────────────────────────────────────── */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+/* ── Dashboard Cards ─────────────────────────────────────────── */
+.dashboard-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.dashboard-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+  border-color: rgba(99,102,241,0.3);
+}
+
+.dashboard-card.card-primary {
+  background: linear-gradient(135deg, rgba(99,102,241,0.05), rgba(236,72,153,0.05));
+}
+
+.dashboard-card.card-success {
+  background: linear-gradient(135deg, rgba(16,185,129,0.05), rgba(99,102,241,0.05));
+}
+
+.dashboard-card.card-accent {
+  background: linear-gradient(135deg, rgba(139,92,246,0.05), rgba(236,72,153,0.05));
+}
+
+.dashboard-card__icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.dashboard-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.dashboard-card p {
+  color: var(--color-text-muted);
+  flex-grow: 1;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.dashboard-card .btn {
+  align-self: flex-start;
+}
