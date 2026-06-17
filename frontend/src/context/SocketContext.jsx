@@ -16,7 +16,10 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (user) {
       // Connect to Socket.io server
-      const newSocket = io('http://localhost:5000', {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+      const baseUrl = apiUrl.replace(/\/api\/?$/, '');
+      
+      const newSocket = io(baseUrl, {
         withCredentials: true,
       });
 
