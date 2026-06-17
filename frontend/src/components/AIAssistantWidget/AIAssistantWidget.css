@@ -201,11 +201,11 @@
 }
 
 /* Dark mode overrides */
-:global(.dark) .ai-message.model {
+.dark .ai-message.model {
   background: var(--color-surface-alt, #1f2937);
 }
 
-:global(.dark) .ai-message-loading {
+.dark .ai-message-loading {
   background: var(--color-surface-alt, #1f2937);
 }
 
