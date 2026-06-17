@@ -60,7 +60,8 @@ const login = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
-  const user = await User.findOne({ email });
+  const cleanEmail = email.trim().toLowerCase();
+  const user = await User.findOne({ email: cleanEmail });
 
   // Use matchPassword method from User model
   if (user && (await user.matchPassword(password))) {
