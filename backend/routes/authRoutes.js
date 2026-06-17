@@ -6,6 +6,7 @@ const {
   logout,
   getMe,
   updateProfile,
+  submitVerification,
   toggleFollow
 } = require('../controllers/authController');
 const { protect } = require('../middleware/authMiddleware');
@@ -18,6 +19,7 @@ router.post('/logout', logout);
 // Protected routes
 router.get('/me', protect, getMe);
 router.put('/profile', protect, updateProfile);
+router.post('/verify', protect, submitVerification);
 router.post('/follow/:id', protect, toggleFollow);
 
 module.exports = router;

@@ -160,6 +160,37 @@ const updateProfile = asyncHandler(async (req, res) => {
 });
 
 // ─────────────────────────────────────────
+// @desc    Submit ID Document for Verification
+// @route   POST /api/auth/verify
+// @access  Private
+// ─────────────────────────────────────────
+const submitVerification = asyncHandler(async (req, res) => {
+  const { idDocument } = req.body;
+  const user = await User.findById(req.user._id);
+
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  if (!idDocument) {
+    res.status(400);
+    throw new Error('Please provide an ID document image');
+  }
+
+  user.idDocument = idDocument;
+  user.idSubmittedAt = Date.now();
+  user.isVerified = false;
+  
+  await user.save();
+
+  res.status(200).json({
+    success: true,
+    message: 'Verification document submitted successfully',
+  });
+});
+
+// ─────────────────────────────────────────
 // @desc    Toggle Follow user
 // @route   POST /api/auth/follow/:id
 // @access  Private
@@ -200,4 +231,4 @@ const toggleFollow = asyncHandler(async (req, res) => {
   });
 });
 
-module.exports = { register, login, logout, getMe, updateProfile, toggleFollow };
+module.exports = { register, login, logout, getMe, updateProfile, submitVerification, toggleFollow };

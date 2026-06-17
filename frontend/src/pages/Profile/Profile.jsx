@@ -5,9 +5,27 @@ import API from '../../services/api';
 import './Profile.css';
 
 const Profile = () => {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const [reviews, setReviews] = useState([]);
   const [loadingReviews, setLoadingReviews] = useState(false);
+  
+  const [idImageBase64, setIdImageBase64] = useState('');
+  const [uploadingId, setUploadingId] = useState(false);
+
+  const submitVerification = async () => {
+    if (!idImageBase64) return;
+    setUploadingId(true);
+    try {
+      await API.post('/auth/verify', { idDocument: idImageBase64 });
+      updateUser({ ...user, idDocument: idImageBase64, isVerified: false });
+      setIdImageBase64('');
+      alert('ID Document submitted successfully! An admin will review it soon.');
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to submit verification');
+    } finally {
+      setUploadingId(false);
+    }
+  };
 
   useEffect(() => {
     if (user && user._id) {
@@ -58,11 +76,62 @@ const Profile = () => {
           </p>
           <p>✉️ {user.email}</p>
         </div>
-        <div className="profile-actions">
+        <div className="profile-actions" style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
           <Link to="/profile/edit" className="btn btn-primary">
             Edit Profile
           </Link>
+          {user.role === 'admin' && (
+            <Link to="/admin" className="btn btn-outline" style={{ background: '#fef3c7', color: '#b45309', border: '1px solid #fde68a' }}>
+              👑 Admin Dashboard
+            </Link>
+          )}
         </div>
+      </div>
+
+      {/* Verification Section */}
+      <div className="profile-section card" style={{ marginBottom: '2rem', padding: '1.5rem', border: '1px solid var(--color-border)' }}>
+        <h2>Account Verification</h2>
+        {user.isVerified ? (
+          <p style={{ color: '#10b981', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>✅</span> Your account is fully verified. Thank you for keeping the community safe!
+          </p>
+        ) : user.idDocument ? (
+          <p style={{ color: '#f59e0b', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span>⏳</span> Your ID document has been submitted and is pending admin verification.
+          </p>
+        ) : (
+          <div>
+            <p style={{ color: 'var(--text-main)', marginBottom: '1rem' }}>
+              Verify your identity to get the verified badge and build trust in the community.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <input 
+                type="file" 
+                accept="image/*" 
+                onChange={(e) => {
+                  const file = e.target.files[0];
+                  if (file) {
+                    if (file.size > 5 * 1024 * 1024) return alert('File too large (max 5MB)');
+                    const reader = new FileReader();
+                    reader.onloadend = () => setIdImageBase64(reader.result);
+                    reader.readAsDataURL(file);
+                  }
+                }} 
+                style={{ fontSize: '0.9rem' }}
+              />
+              <button 
+                className="btn btn-primary" 
+                disabled={!idImageBase64 || uploadingId}
+                onClick={submitVerification}
+              >
+                {uploadingId ? 'Submitting...' : 'Submit ID'}
+              </button>
+            </div>
+            {idImageBase64 && (
+              <img src={idImageBase64} alt="ID Preview" style={{ marginTop: '1rem', height: '100px', borderRadius: '4px', border: '1px solid var(--color-border)' }} />
+            )}
+          </div>
+        )}
       </div>
 
       {user.bio && (
