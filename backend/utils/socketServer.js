@@ -18,6 +18,12 @@ const initSocketServer = (httpServer) => {
       methods: ['GET', 'POST'],
       credentials: true,
     },
+    // Tuned for Render free tier — longer timeouts to survive cold starts
+    pingTimeout: 60000,
+    pingInterval: 25000,
+    connectTimeout: 45000,
+    // Allow transport upgrade
+    transports: ['websocket', 'polling'],
   });
 
   // Track online users: Map<userId, socketId>
@@ -29,6 +35,7 @@ const initSocketServer = (httpServer) => {
     // 1. User joins their personal room (for 1:1 messages and global notifications)
     socket.on('setup', (userData) => {
       if (!userData || !userData._id) return;
+      socket.userId = userData._id; // Store userId on the socket for cleanup
       socket.join(userData._id);
       onlineUsers.set(userData._id, socket.id);
       socket.emit('connected');
@@ -52,17 +59,22 @@ const initSocketServer = (httpServer) => {
     socket.on('typing', ({ room, user }) => socket.to(room).emit('typing', user));
     socket.on('stop_typing', (room) => socket.to(room).emit('stop_typing'));
 
-    // 5. Send new message
+    // 5. Send new message — saves to DB and broadcasts
     socket.on('new_message', async (messageData) => {
       console.log('Received new_message from frontend:', messageData);
       try {
         const { sender, receiver, trip, content } = messageData;
 
+        if (!sender || !sender._id || !content) {
+          console.error('Invalid message data: missing sender or content');
+          return;
+        }
+
         // Save to MongoDB
         let newMessage = await Message.create({
           sender: sender._id,
           receiver: receiver ? receiver._id : undefined,
-          trip: trip ? trip : undefined,
+          trip: trip || undefined,
           content,
           readBy: [sender._id],
         });
@@ -71,33 +83,39 @@ const initSocketServer = (httpServer) => {
 
         // Broadcast the message
         if (trip) {
-          // It's a trip group message -> send to the trip room
+          // Trip group message -> send to the entire trip room (all members including sender)
           io.to(trip).emit('message_received', newMessage);
         } else if (receiver) {
-          // It's a 1:1 message -> send to receiver's personal room
+          // 1:1 message -> send to receiver's personal room
           socket.to(receiver._id).emit('message_received', newMessage);
-          // Also emit to sender (in case they have multiple tabs open)
+          // Also send back to sender so their UI updates with the DB-saved version
           socket.emit('message_received', newMessage);
         }
 
+        // Acknowledge to the sender that the message was saved successfully
+        socket.emit('message_saved', {
+          success: true,
+          tempId: messageData.tempId, // Frontend sends a tempId to correlate
+          savedMessage: newMessage,
+        });
+
       } catch (err) {
         console.error('Socket message save error:', err);
+        // Notify sender of failure so they can retry
+        socket.emit('message_error', {
+          tempId: messageData.tempId,
+          error: 'Failed to save message. Please try again.',
+        });
       }
     });
 
     // 6. Handle Disconnect
-    socket.on('disconnect', () => {
-      let disconnectedUserId = null;
-      for (let [userId, sockId] of onlineUsers.entries()) {
-        if (sockId === socket.id) {
-          disconnectedUserId = userId;
-          onlineUsers.delete(userId);
-          break;
-        }
-      }
-      if (disconnectedUserId) {
+    socket.on('disconnect', (reason) => {
+      const userId = socket.userId;
+      if (userId && onlineUsers.get(userId) === socket.id) {
+        onlineUsers.delete(userId);
         io.emit('online_users', Array.from(onlineUsers.keys()));
-        console.log(`User ${disconnectedUserId} disconnected`);
+        console.log(`User ${userId} disconnected (reason: ${reason})`);
       }
     });
   });

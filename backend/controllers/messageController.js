@@ -26,12 +26,61 @@ const getDirectMessages = asyncHandler(async (req, res) => {
 const getTripMessages = asyncHandler(async (req, res) => {
   const tripId = req.params.tripId;
 
-  // We assume authorization was handled or user is part of trip (can enhance later)
   const messages = await Message.find({ trip: tripId })
     .populate('sender', 'name profilePicture')
     .sort({ createdAt: 1 });
 
   res.json({ success: true, data: messages });
+});
+
+// @route   POST /api/messages/:userId
+// @desc    Send a direct message (REST fallback when socket is unavailable)
+// @access  Private
+const sendDirectMessage = asyncHandler(async (req, res) => {
+  const receiverId = req.params.userId;
+  const senderId = req.user._id;
+  const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    res.status(400);
+    throw new Error('Message content is required');
+  }
+
+  let newMessage = await Message.create({
+    sender: senderId,
+    receiver: receiverId,
+    content: content.trim(),
+    readBy: [senderId],
+  });
+
+  newMessage = await newMessage.populate('sender', 'name profilePicture');
+
+  res.status(201).json({ success: true, data: newMessage });
+});
+
+// @route   POST /api/messages/trip/:tripId
+// @desc    Send a trip group message (REST fallback when socket is unavailable)
+// @access  Private
+const sendTripMessage = asyncHandler(async (req, res) => {
+  const tripId = req.params.tripId;
+  const senderId = req.user._id;
+  const { content } = req.body;
+
+  if (!content || !content.trim()) {
+    res.status(400);
+    throw new Error('Message content is required');
+  }
+
+  let newMessage = await Message.create({
+    sender: senderId,
+    trip: tripId,
+    content: content.trim(),
+    readBy: [senderId],
+  });
+
+  newMessage = await newMessage.populate('sender', 'name profilePicture');
+
+  res.status(201).json({ success: true, data: newMessage });
 });
 
 // @route   GET /api/messages/conversations
@@ -47,10 +96,6 @@ const getConversations = asyncHandler(async (req, res) => {
 
   const uniqueUserIds = [...new Set([...sentMessages, ...receivedMessages].map((id) => id.toString()))];
 
-  // We could fetch user details for these IDs here, but for simplicity we will
-  // just return the IDs. The frontend can use this to build the sidebar.
-  // Actually, let's fetch the latest message for each to sort them.
-  
   const conversations = [];
   
   for (const uid of uniqueUserIds) {
@@ -86,4 +131,4 @@ const getConversations = asyncHandler(async (req, res) => {
   res.json({ success: true, data: conversations });
 });
 
-module.exports = { getDirectMessages, getTripMessages, getConversations };
+module.exports = { getDirectMessages, getTripMessages, getConversations, sendDirectMessage, sendTripMessage };
