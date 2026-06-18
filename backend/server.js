@@ -54,6 +54,23 @@ if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
 
+// ─── Root Route ───────────────────────────────────────────────
+app.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    name: 'TravelMate AI API',
+    version: '1.0.0',
+    status: '🟢 Online',
+    message: 'Welcome to the TravelMate AI backend. Visit the frontend at your Vercel URL.',
+    docs: {
+      health: '/api/health',
+      auth: '/api/auth',
+      trips: '/api/trips',
+      messages: '/api/messages',
+    },
+  });
+});
+
 // ─── Health Check ─────────────────────────────────────────────
 app.get('/api/health', (req, res) => {
   res.status(200).json({
