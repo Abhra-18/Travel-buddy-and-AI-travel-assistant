@@ -12,10 +12,11 @@ const ReviewSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    // For Group Trip chats
     trip: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Trip',
-      required: true,
+      // Optional — reviews can be submitted without a specific trip
     },
     rating: {
       type: Number,
@@ -32,7 +33,7 @@ const ReviewSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Prevent a user from reviewing the same person multiple times for the same trip
-ReviewSchema.index({ reviewer: 1, reviewee: 1, trip: 1 }, { unique: true });
+// Prevent duplicate reviews: one per trip pairing, or one general review if no trip
+ReviewSchema.index({ reviewer: 1, reviewee: 1, trip: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('Review', ReviewSchema);
